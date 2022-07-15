@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ******* //
+// MODELS //
+// ***** //
+model SysUser {
+  id                   Int        @id @default(autoincrement())
+  identificationNumber String     @unique @db.VarChar(50)
+  mobileNumber         String     @unique @db.VarChar(50)
+  emailAddress         String     @unique @db.VarChar(200)
+  firstName            String?    @db.VarChar(200)
+  lastName             String?    @db.VarChar(200)
+  password             String?    @db.VarChar(200)
+  isVerified           Int?       @default(0) @db.SmallInt
+  isCompliant          Int?       @default(0) @db.SmallInt
+  isActive             Int?       @default(0) @db.SmallInt
+  deviceToken          String?    @db.VarChar(200)
+  createdAt            DateTime   @default(now()) @db.Timestamp
+  blockedOn            DateTime?  @db.Timestamp
+  blockedBy            Int?       @db.Integer
+  referralCode         String?    @unique @db.VarChar(50)
+  userType             UserType[]
+}
+
+// ****** //
+// ENUMS //
+// **** //
+enum UserType {
+  ADMINUSER
+  CUSUSER
+}

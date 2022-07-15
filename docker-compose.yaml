@@ -1,0 +1,58 @@
+version: '3.6'
+
+services:
+  postgres:
+    container_name: lapi_db
+    image: postgres:11.2-alpine
+    restart: unless-stopped
+    volumes:
+      - lapi:/var/lib/postgresql/data
+    networks:
+      backend_network:
+        ipv4_address: 172.25.0.2
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: "lapi_db_user"
+      POSTGRES_PASSWORD: "lapi_db_password"
+      POSTGRES_DB: "lapi_db"
+      PGDATA: /var/lib/postgresql/data/lapi_db/
+  lapi:
+    container_name: lapi
+    build:
+      context: .
+      dockerfile: docker/dev.Dockerfile
+    volumes:
+      # Binds volume to enable working through docker locally
+      - type: bind
+        source: ./src/
+        target: /app/src/
+      - type: bind
+        source: ./package.json
+        target: /app/package.json
+      - type: bind
+        source: ./tsconfig.json
+        target: /app/tsconfig.json
+      - type: bind
+        source: ./prisma/
+        target: /app/prisma/
+    networks:
+      backend_network:
+        ipv4_address: 172.25.0.3
+    depends_on:
+      - postgres
+    ports:
+      - 3000:3000
+    environment:
+      PORT: 3000
+      NODE_ENV: 'local'
+      LAPI_LOG_LEVEL: 'debug'
+volumes:
+  lapi:
+
+networks:
+  backend_network:
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.25.0.0/16
