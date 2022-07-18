@@ -3,7 +3,7 @@ steps:
   - id: "Lint and Build application"
     name: node:16
     entrypoint: sh
-    args: ["/workspace/cloudbuild/scripts/build-kapi.sh", "${_DATABASE_URL}"]
+    args: ["/workspace/cloudbuild/scripts/build-lapi.sh", "${_DATABASE_URL}"]
 
   # Build the container image
   - id: "Build docker image"
@@ -36,9 +36,8 @@ steps:
         "$COMMIT_SHA",
         "0",
         "1",
-        "${_KAPI_SA}",
+        "${_LAPI_SA}",
         "${_JWT_SECRET_KEY}",
-        "${_PROJECT_ID}",
       ]
 
 images:

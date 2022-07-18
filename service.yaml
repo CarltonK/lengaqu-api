@@ -1,0 +1,31 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  annotations:
+    run.googleapis.com/ingress: all
+    run.googleapis.com/ingress-status: all
+  name: lapi-prod
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: '<MAX_SCALE>'
+        autoscaling.knative.dev/minScale: '<MIN_SCALE>'
+        run.googleapis.com/cloudsql-instances: '<DATABASE_INSTANCE_CONNECTION_NAME>'
+    spec:
+      timeoutSeconds: 300
+      serviceAccountName: '<LAPI_SA>'
+      containers:
+        - image: <LAPI_CONTAINER_IMAGE>
+          ports:
+            - containerPort: 8080
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: LAPI_LOG_LEVEL
+              value: info
+            - name: JWT_SECRET_KEY
+              value: '<JWT_SECRET_KEY>'
+  traffic:
+    - latestRevision: true
+      percent: 100
