@@ -2,15 +2,18 @@ import * as express from 'express';
 import * as morgan from 'morgan';
 import helmet from 'helmet';
 
+import ErrorHandler from './handlers/error';
 import CorsMiddleware from './middlewares/cors';
 import { logger, morganLogger } from './middlewares/logger';
 
 import BaseController from './controllers/base';
+import UserController from './controllers/user';
 
 export default class App {
     public app: express.Application;
     private port: any;
     private controllers: any[] = [
+        new UserController(),
         new BaseController(),
     ];
 
@@ -26,6 +29,7 @@ export default class App {
         this.app.use(express.json());
         this.app.use(helmet());
         this.app.use(morgan(morganLogger));
+        this.app.use(ErrorHandler.error);
         this.app.use(CorsMiddleware.cors);
     }
 

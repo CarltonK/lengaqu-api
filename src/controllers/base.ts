@@ -18,10 +18,7 @@ export default class BaseController {
   }
 
   private livenessCheck = (request: Request, response: Response) => {
-    response.status(200).send({
-      status: true,
-      detail: `LAPI is up and running`,
-    });
+    response.status(200).send({ status: true, detail: `LAPI is up and running` });
   }
 
 }

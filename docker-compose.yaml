@@ -47,6 +47,7 @@ services:
       PORT: 3000
       NODE_ENV: 'local'
       LAPI_LOG_LEVEL: 'debug'
+      JWT_SECRET_KEY: 'secret'
 volumes:
   lapi:
 
