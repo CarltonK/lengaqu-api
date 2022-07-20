@@ -5,8 +5,9 @@ import HttpException from '../helpers/exceptions';
 import { randomPassword, digits } from 'secure-random-password';
 import { createHash } from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
+import LogService from './log_service';
 
-export default class AuthService {
+export default class AuthService extends LogService {
     // private jwt: JwtUtility = new JwtUtility();
 
     async userRegistration(data: any): Promise<any> {
@@ -43,9 +44,11 @@ export default class AuthService {
                 });
             }
 
+            await this.createLog({ eventType: 'USER', userId: user.id, desc: 'JOIN ATTEMPT' });
+
             return data;
         } catch (error: any) {
-            throw new HttpException(400, `${error.message}`);
+            throw new HttpException(400, `${error}`);
         }
     }
 
