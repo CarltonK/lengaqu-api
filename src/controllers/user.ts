@@ -6,6 +6,7 @@ import AuthService from '../services/auth_service';
 export default class UserController {
     public path = '/users';
     public router = Router();
+    private codeReasonEnums: string[] = ['REGISTRATION', 'PASSWORD_RESET'];
     private emailRegex = /^(([^<>()[\]\\.,;:\s@"]+(\.[^<>()[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     private allowedMobilePrefix: string[] = ['01', '07'];
     private allowedUserTypes = ['CUSUSER'];
@@ -19,6 +20,7 @@ export default class UserController {
 
     public intializeRoutes() {
         this.router.post(this.path, this.createUser.bind(this));
+        this.router.post(this.path + '/:id/verify', this.verifyUser.bind(this));
     }
 
     private createUser = async (request: Request, response: Response) => {
@@ -60,6 +62,32 @@ export default class UserController {
             response.status(201).send({ status: true, detail: 'Account created successfully', user });
         } catch (error: any) {
             response.status(error.code).send({ status: false, detail: `${error.message}` });
+        }
+    }
+
+    private verifyUser = async (request: Request, response: Response) => {
+        try {
+            const identificationNumber = request.params.id;
+            const { code, reason } = request.query;
+
+            if (!code) throw new HttpException(400, 'Please provide a code', request);
+            if (!reason) throw new HttpException(400, 'A reason is required to verify your code', request);
+
+            if (!this.codeReasonEnums.includes(String(reason))) throw new HttpException(400, 'The reason must be either "REGISTRATION" or "PASSWORD_RESET"', request);
+
+            const data = { identificationNumber, code, reason };
+
+            await this.authService.verifyUser(data);
+
+            response.status(200).send({
+                status: true,
+                detail: 'Account verified',
+            });
+        } catch (error: any) {
+            response.status(error.code).send({
+                status: false,
+                detail: `${error.message}`,
+            });
         }
     }
 
