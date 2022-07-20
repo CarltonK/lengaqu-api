@@ -27,6 +27,20 @@ model SysUser {
   blockedBy            Int?       @db.Integer
   referralCode         String?    @unique @db.VarChar(50)
   userType             UserType[]
+  logCodes             LogCode[]
+}
+
+model LogCode {
+  codeId     Int           @default(autoincrement())
+  userId     Int           @db.Integer
+  code       String        @db.VarChar(200)
+  createdAt  DateTime      @default(now()) @db.Timestamp
+  validUntil DateTime      @db.Timestamp
+  usedAt     DateTime?     @db.Timestamp
+  codeReason LogCodeReason
+  user       SysUser       @relation(fields: [userId], references: [id])
+
+  @@id([codeId])
 }
 
 // ****** //
@@ -35,4 +49,10 @@ model SysUser {
 enum UserType {
   ADMINUSER
   CUSUSER
+}
+
+enum LogCodeReason {
+  REGISTRATION
+  PASSWORD_RESET
+  TRANSACTION_VERIFY
 }
