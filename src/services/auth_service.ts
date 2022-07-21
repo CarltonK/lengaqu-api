@@ -138,6 +138,99 @@ export default class AuthService extends LogService {
         }
     }
 
+    async userPasswordResetRequest(identificationNumber: string): Promise<void> {
+        try {
+            const user = await db.prisma.sysUser.findUnique({
+                where: { identificationNumber },
+                select: { id: true },
+            });
+
+            if (!user) throw new HttpException(400, 'User Not Found');
+
+            const code = this.generateRandomCode();
+            const hashedCode = this.hashVerificationCode(code);
+
+            const rightNow = new Date();
+            const validUntil = new Date(rightNow.setHours(rightNow.getHours() + 1));
+
+            const { id } = user;
+
+            const existingCode = await db.prisma.logCode.findFirst({
+                where: { userId: id, usedAt: { equals: null }, codeReason: { equals: 'PASSWORD_RESET' } },
+                orderBy: { createdAt: 'desc' },
+            });
+
+            if (existingCode) throw new HttpException(400, 'Please check your SMS for an OTP code');
+
+            await db.prisma.logCode.create({
+                data: {
+                    code: hashedCode,
+                    userId: user.id,
+                    codeReason: 'PASSWORD_RESET',
+                    validUntil,
+                },
+            });
+        } catch (error: any) {
+            throw new HttpException(400, `${error.message}`);
+        }
+    }
+
+    async userPasswordValidateResetRequest(data: any): Promise<void> {
+        try {
+            const { newPassword, oldPassword, code, identificationNumber } = data;
+
+            const user = await db.prisma.sysUser.findUnique({
+                where: { identificationNumber },
+                select: { id: true, password: true },
+            });
+
+            if (!user) throw new HttpException(400, 'User Not Found');
+
+            const { id, password } = user;
+
+            /*
+             * Check if newPassword === oldPassword
+             * Check if oldPassword === password
+             * Check if newPassword === password
+             */
+
+            if (newPassword === oldPassword) throw new HttpException(400, 'Passwords shouldn\'t match');
+
+            const checkOldPasswordMatch = await compare(oldPassword, password!);
+            if (!checkOldPasswordMatch) throw new HttpException(400, 'Passwords don\'t match');
+
+            const checkNewPasswordMatch = await compare(newPassword, password!);
+            if (checkNewPasswordMatch) throw new HttpException(400, 'Please choose a new password');
+
+            const rightNow = new Date();
+
+            const existingCode = await db.prisma.logCode.findFirst({
+                where: { userId: id, codeReason: 'PASSWORD_RESET', usedAt: { equals: null }, code: { equals: code }, validUntil: { gt: rightNow } },
+                orderBy: { createdAt: 'desc' },
+            });
+
+            if (!existingCode) throw new HttpException(400, 'OTP is incorrect or has already been used');
+
+            const newHashedPassword = await hash(newPassword, 10);
+
+            const { codeId } = existingCode;
+
+            await db.prisma.$transaction([
+                db.prisma.sysUser.update({
+                    where: { identificationNumber },
+                    data: { password: newHashedPassword },
+                }),
+                db.prisma.logCode.update({
+                    where: { codeId },
+                    data: { usedAt: rightNow },
+                }),
+            ]);
+
+        } catch (error: any) {
+            throw new HttpException(400, `${error.message}`);
+        }
+    }
+
     private generateRandomCode(): string {
         const characterOptions = { length: 6, characters: [digits] };
         return randomPassword(characterOptions);

@@ -21,6 +21,8 @@ export default class UserController {
     public intializeRoutes() {
         this.router.post(this.path, this.createUser.bind(this));
         this.router.post(this.path + '/:id/verify', this.verifyUser.bind(this));
+        this.router.get(this.path + '/:id/password', this.requestChangePasswordUser.bind(this));
+        this.router.put(this.path + '/:id/password', this.validateChangePasswordUser.bind(this));
     }
 
     private createUser = async (request: Request, response: Response) => {
@@ -88,6 +90,38 @@ export default class UserController {
                 status: false,
                 detail: `${error.message}`,
             });
+        }
+    }
+
+    private requestChangePasswordUser = async (request: Request, response: Response) => {
+        try {
+            const identificationNumber = request.params.id;
+            await this.authService.userPasswordResetRequest(identificationNumber);
+
+            response.status(200).send({ status: true, detail: 'Password reset request sent successfuly' });
+        } catch (error: any) {
+            response.status(error.code).send({ status: false, detail: `${error.message}` });
+        }
+    }
+
+    private validateChangePasswordUser = async (request: Request, response: Response) => {
+        try {
+
+            const identificationNumber = request.params.id;
+
+            const { newPassword, oldPassword, code } = request.body;
+
+            if (!newPassword) throw new HttpException(400, 'Please provide the new password', request);
+            if (!oldPassword) throw new HttpException(400, 'Please provide the old password', request);
+            if (!code) throw new HttpException(400, 'Please provide the OTP code sent to your phone', request);
+
+            const data = { newPassword, oldPassword, code, identificationNumber };
+
+            await this.authService.userPasswordValidateResetRequest(data);
+
+            response.status(200).send({ status: true, detail: 'Password reset successfully' });
+        } catch (error: any) {
+            response.status(error.code).send({ status: false, detail: `${error.message}` });
         }
     }
 
