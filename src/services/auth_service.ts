@@ -118,7 +118,7 @@ export default class AuthService extends LogService {
 
                 if (user.isVerified !== 1) throw new HttpException(400, 'Please verify your account before login');
 
-                const checkPassword = compare(password, user.password!);
+                const checkPassword = await compare(password, user.password!);
 
                 if (!checkPassword) throw new HttpException(400, 'Incorrect Password');
 
