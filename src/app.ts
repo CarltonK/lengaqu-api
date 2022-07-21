@@ -39,6 +39,7 @@ export default class App {
         this.controllers.forEach((controller: any) => {
             this.app.use('/api/', controller.router);
         });
+        logger('LAPI').info(`Sucessfully mounted all controllers`);
     }
 
     public listen() {
