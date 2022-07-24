@@ -9,6 +9,7 @@ import { logger, morganLogger } from './middlewares/logger';
 import BaseController from './controllers/base';
 import UserController from './controllers/user';
 import SessionController from './controllers/session';
+import StoreController from './controllers/store';
 
 export default class App {
     public app: express.Application;
@@ -16,6 +17,7 @@ export default class App {
     private controllers: any[] = [
         new SessionController(),
         new UserController(),
+        new StoreController(),
         new BaseController(),
     ];
 
