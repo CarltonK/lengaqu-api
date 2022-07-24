@@ -48,6 +48,8 @@ services:
       NODE_ENV: 'local'
       LAPI_LOG_LEVEL: 'debug'
       JWT_SECRET_KEY: 'secret'
+      PUBSUB_EMULATOR_HOST: '172.25.0.1:8085'
+      GOOGLE_CLOUD_PROJECT: ''
 volumes:
   lapi:
 
